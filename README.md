@@ -1,0 +1,12 @@
+- make your python scripts in the src/test thing
+- copy pyproject.toml (this is for python packaging)
+	- "name" in the .toml file should have either `src/kinetic_monte_carlo` or `kinetic_monte_carlo`
+- can install "pip install -e ." in the ../src directory
+- copy license from somewhere else LICENSE
+- the tests are important! and a python package ensures that the installed copy of the package is tested, in a separate directory tests
+	- for every file in src folder, have test_<file> in the src code
+	- `tabe` opens things in a new tab in vim, `gt` moves between tabs
+	- Can group tests into classes to organize things (this breaks classrooms)
+	- Can run only specific tests using :: after pytest test_<file>.py::... (first :: is for class, followed by another one for the specific test)
+- Can automate the generation of docs (another dir like tests or src) using sphinx or mkdocs
+

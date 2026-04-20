@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+   { name = "Rhiannon Hendley", email = "rmh336@cornell.edu"},
+]
+name = "chem_7870_kmc"
+version = "0.0.1"
+dependencies = [
+   "numpy",
+   "matplotlib",
+   "pytest",
+]
