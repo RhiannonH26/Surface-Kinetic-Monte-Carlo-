@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 authors = [
    { name = "Rhiannon Hendley", email = "rmh336@cornell.edu"},
 ]
-name = "src/kinetic_monte_carlo"
+name = "kinetic_monte_carlo"
 version = "0.0.1"
 dependencies = [
    "numpy",
