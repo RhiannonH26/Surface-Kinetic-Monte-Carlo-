@@ -5,7 +5,8 @@ import numpy as np
 def k_adsorption(p_A: float,
                k: float,
                T: float,
-               m_A: float):
+               m_A: float,
+               cell_length: float):
     """Calculates the adsorption rate constant for a given species A.
     Assumes sticking probability is one.
 
@@ -18,14 +19,20 @@ def k_adsorption(p_A: float,
     T : float
         The temperature in units of K
     m_A : float
-        The mass of species A in units of kg
+        The mass of species A in units of u (i.e. atomic units)
+    cell_length : float
+        The side length of the 2D grid representing the surface, in Angstroms
     
     Returns
     ----------
     float
         Adsorption rate constant for species A.
     """
-    return p_A/np.sqrt(2*np.pi*m_A*k*T)
+    # get the surface area of the unit cell
+    Auc = cell_length^2 * (1e-10)^2
+    # convert mass from atomic units into kg
+    m = m_A/(6.022e23)/1000 # divide by Avogadro's number and then divide by 1000 for g -> kg
+    return p_A*Auc/np.sqrt(2*np.pi*m*k*T) # in units of s^-1 (i.e. zeroth order rxn)
 
 def k_desorption(delG_ads: float,
                  p_A: float,
@@ -46,7 +53,9 @@ def k_desorption(delG_ads: float,
     T : float
         The temperature in units of K
     m_A : float
-        The mass of species A in units of kg
+        The mass of species A in units of u (i.e. atomic units)
+    cell_length : float
+        The side length of the 2D grid representing the surface, in Angstroms
     
     Returns
     ----------
