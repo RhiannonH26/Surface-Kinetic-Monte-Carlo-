@@ -64,8 +64,35 @@ def generate_rate_const_initial_list(N_grid: float,
     # note could have stored things a bit differently but this is how i chose to do it
     return rate_constant_properties, rates.squeeze()
 
+def _choose_random_rate(rates: np.ndarray):
+    """Picks a random rate constant, k_q, using binary search
+    according to the equation:
+
+    .. math::
+
+        \sum_{i=1}^{p} k_i \gt \rho_1 k_{tot} \gt \sum_{i=1}^{p-1} k_i 
+    
+    Parameters
+    ----------
+    rates: np.ndarray
+        A numpy array of size (N,) containing all N possible rates the system
+        has.
+    
+    Returns
+    ----------
+    int
+        Index of the chosen rate
+    """
+    # pick a random number
+    rho_1 = np.random.random()
+    # get total rates
+    cumsum = np.cumsum(rates)
+    # start binary search, using numpy's search
+    chosen = np.searchsorted(cumsum,rho_1*cumsum[-1]) 
+    return chosen
+
 def propagate_monte_carlo_one_step(rate_constant_list: list,
-                                   rates: float,
+                                   rates: np.ndarray,
                                    current_time: float,
                                    ):
     """Propagates the kinetic monte carlo algorithm in time by taking one step.
