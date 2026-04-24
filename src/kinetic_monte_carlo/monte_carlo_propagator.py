@@ -45,17 +45,10 @@ def generate_rate_const_initial_list(N_grid: float,
     and are a location for a particle to adsorb. This assumes that the surface 
     starts out clean, i.e. no desorption events are possible.
 
-    The list is contains a series of dictionaries specifying the following:
-    ```
-    {   
-        "i" : list(int) or None, # None if exists as a gas in state i, the initial state
-        "j" : list(int) or None, # None if exists as a gas in state j, the final state
-        "i_atom": str, # identity of atom in state i, might later consider j_atom for reactions
-    }
-    ```
-
-    The second output is a np.array that contains a list of the numerical rate
-    constants that has an index that matches the description above.
+    The output is a np.array that contains an array of the numerical rate
+    constants that has an index that matches the description above. The index
+    provides information about (1) the location on the grid (first two indices),
+    (2) the atom type, and (3) the rate constant type (ads, des, ...)
 
     Parameters
     ----------
@@ -123,7 +116,7 @@ def _choose_random_rate(rates: np.ndarray):
     
     Returns
     ----------
-    int
+    np.ndarray
         Index of the chosen rate
     """
     # pick a random number
@@ -209,4 +202,4 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
             el = list(comps_properties.keys())[m]
             myk = comps_properties.get(el).get("k_ads")
             rates[index[0],index[1],m,event_type] = myk
-    return 
+    return rates,current_time
