@@ -61,15 +61,12 @@ def test_propagate_one_step_choose_desorption():
             "mass" : 15.999,
             "k_ads" : 1.0,
             "k_des" : 2.0,
-            "k_diffusion" : 1e-3,
-            "k_rxn" : 1e-4
         },
         "C" : {
             "partial_pressure" : 0.3,
             "mass" : 12.01,
             "k_ads" : 12.0,
             "k_des" : 4.0,
-            "k_rxn" : 1e-4
         }
     }
     grid_vis=np.zeros((2,2)) # unimportant
@@ -97,15 +94,12 @@ def test_propagate_one_step_choose_adsorption():
             "mass" : 15.999,
             "k_ads" : 1.0,
             "k_des" : 2.0,
-            "k_diffusion" : 1e-3,
-            "k_rxn" : 1e-4
         },
         "C" : {
             "partial_pressure" : 0.3,
             "mass" : 12.01,
             "k_ads" : 12.0,
             "k_des" : 4.0,
-            "k_rxn" : 1e-4
         }
     }
     # mostly zeros, 2x2 grid with 2 components, 2 rxn types
@@ -132,15 +126,12 @@ def test_grid_vis():
             "mass" : 15.999,
             "k_ads" : 1.0,
             "k_des" : 2.0,
-            "k_diffusion" : 1e-3,
-            "k_rxn" : 1e-4
         },
         "C" : {
             "partial_pressure" : 0.3,
             "mass" : 12.01,
             "k_ads" : 12.0,
             "k_des" : 4.0,
-            "k_rxn" : 1e-4
         }
     }
     grid_vis=np.zeros((2,2))

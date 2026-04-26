@@ -129,6 +129,7 @@ def _choose_random_rate(rates: np.ndarray, seed = None):
     cumsum = np.cumsum(rates.flatten())
     # start binary search, using numpy's search
     chosen = np.searchsorted(cumsum,rho_1*cumsum[-1]) 
+    chosen = min(chosen, rates.size - 1) # avoid bugs
     # fix the index
     real_index = np.unravel_index(chosen,rates.shape)
     return real_index
@@ -188,6 +189,10 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
         The numerical value of the rate constants with the new rate const and removed rate constants.
     float
         Updated time.
+    np.ndarray
+        Provides information about the state of the grid for later visualization. Each 
+        position has an index indicating which atom is adsorbed (equal to 1 + index
+        in the comps_properties dict). Size (Ngrid, Ngrid)
     """
     if seed:
         np.random.seed(seed)
