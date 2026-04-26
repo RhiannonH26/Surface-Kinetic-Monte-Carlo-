@@ -72,6 +72,7 @@ def test_propagate_one_step_choose_desorption():
             "k_rxn" : 1e-4
         }
     }
+    grid_vis=np.zeros((2,2)) # unimportant
     # mostly zeros, 2x2 grid with 2 components, 2 rxn types
     rates = np.zeros((2,2,2,2))
     k_indices = {'k_ads': 0, 'k_des': 1}
@@ -79,7 +80,7 @@ def test_propagate_one_step_choose_desorption():
     rates[0,0,0,1] = 2.0 # one O atom has been adsorbed at the (0,0) site
     # the next event should be adsorption, moved forward in time by:
     time = -np.log(np.random.random())/2.0
-    rates,updated_time = monte_carlo_propagator.propagate_monte_carlo_one_step(rates, 0, comps_properties,k_indices, seed=67)
+    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates, 0, comps_properties,k_indices,grid_vis,seed=67)
     # the next chosen rate should be a desorption event
     # that means ALL desorption events are possible,
     expected_rates = np.zeros((2,2,2,2))
@@ -108,15 +109,51 @@ def test_propagate_one_step_choose_adsorption():
         }
     }
     # mostly zeros, 2x2 grid with 2 components, 2 rxn types
+    grid_vis=np.zeros((2,2)) # unimportant
     rates = np.zeros((2,2,2,2))
     k_indices = {'k_ads': 0, 'k_des': 1}
     # only one site is active
     rates[0,0,0,0] = 1.0 # one O atom could adsorb
     rates[0,0,1,0] = 12.0 # one C atom could adsorb
     # the next event should be adsorption, moved forward in time by:
-    rates,updated_time = monte_carlo_propagator.propagate_monte_carlo_one_step(rates, 0, comps_properties,k_indices, seed=67)
+    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates, 0, comps_properties,k_indices,grid_vis,seed=67)
     # the next chosen rate should be a desorption event
     # oxygen rate should be removed, only have desorption of C
     expected_rates = np.zeros((2,2,2,2))
     expected_rates[0,0,1,1] = 4.0
     assert np.allclose(rates,expected_rates)
+
+def test_grid_vis():
+    # checks that desorption events are handled correctly
+    np.random.seed(67)
+    comps_properties = {
+        "O" : {
+            "partial_pressure" : 0.7,
+            "mass" : 15.999,
+            "k_ads" : 1.0,
+            "k_des" : 2.0,
+            "k_diffusion" : 1e-3,
+            "k_rxn" : 1e-4
+        },
+        "C" : {
+            "partial_pressure" : 0.3,
+            "mass" : 12.01,
+            "k_ads" : 12.0,
+            "k_des" : 4.0,
+            "k_rxn" : 1e-4
+        }
+    }
+    grid_vis=np.zeros((2,2))
+    # mostly zeros, 2x2 grid with 2 components, 2 rxn types
+    rates = np.zeros((2,2,2,2))
+    k_indices = {'k_ads': 0, 'k_des': 1}
+    # only one site is active
+    rates[0,0,0,0] = 1.0 # one O atom could adsorb
+    rates[0,0,1,0] = 12.0 # one C atom could adsorb
+    # the next event should be adsorption, moved forward in time by:
+    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates, 0, comps_properties,k_indices,grid_vis,seed=67)
+    # the next chosen rate should be a desorption event
+    # oxygen rate should be removed, only have desorption of C
+    expected_grid_vis = np.zeros((2,2))
+    expected_grid_vis[0,0] = 2. # 1 + 1
+    assert np.allclose(grid_vis,expected_grid_vis)

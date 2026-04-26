@@ -137,6 +137,7 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
                                    current_time: float,
                                    comps_properties: dict,
                                    k_indices: dict,
+                                   grid_vis: np.ndarray,
                                    seed = None,
                                    ):
     """Propagates the kinetic monte carlo algorithm in time by taking one step.
@@ -162,8 +163,11 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
         keyword: the element specified with "atom", "partial_pressure" in atm, 
         "mass" in u (atomic units), and "k_ads" the rate constant in units of s^-1. 
         Note that the chosen name or "key" for each component in the first level 
-        of the dictionary is unimportant. For example, one element of this list 
-        could be:
+        of the dictionary is unimportant.
+    grid_vis : np.ndarray
+        Provides information about the state of the grid for later visualization. Each 
+        position has an index indicating which atom is adsorbed (equal to 1 + index
+        in the comps_properties dict). Size (Ngrid, Ngrid)
     k_indices : dict
         Contains the indices (in the 4th dimension of `rates`) of each rate constant.
         Should have the following key words at minimum:
@@ -206,13 +210,17 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
         # set the desorption for this atom
         el = list(comps_properties.keys())[index[2]] # get the atom from chosen index index
         rates[index[0],index[1],index[2],k_indices.get("k_des")] = comps_properties.get(el).get("k_des")
+        # change the grid for this to be the atom identity = comps_properties + 1, 0 represents nothing there
+        grid_vis[index[0], index[1]] = index[2] + 1
     elif event_type == k_indices.get('k_des'): # if we picked a desorption event
         # first remove the desorption
         rates[index] = 0.
+        # change the grid for this to be the atom identity; 0 represents nothing there
+        grid_vis[index[0], index[1]] = 0
         # allow ANY components to adsorb here
         # go element by element here
         for m in range(len(comps_properties.keys())):
             el = list(comps_properties.keys())[m]
             myk = comps_properties.get(el).get("k_ads")
             rates[index[0],index[1],m,k_indices.get('k_ads')] = myk
-    return rates,current_time
+    return rates,current_time,grid_vis
