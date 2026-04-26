@@ -8,3 +8,6 @@
 - Can run only specific tests using :: after pytest test_<file>.py::... (first :: is for class, followed by another one for the specific test)
 - Can automate the generation of docs (another dir like tests or src) using sphinx or mkdocs
 
+```
+python -m kinetic_monte_carlo.make_plots
+```

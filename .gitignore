@@ -2,6 +2,9 @@
 ### You can just copy this file to your project and it will work.
 ### Original source: https://github.com/github/gitignore/blob/main/Python.gitignore
 
+#
+*.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
