@@ -100,7 +100,7 @@ def generate_rate_const_initial_list(N_grid: float,
     # note could have stored things a bit differently but this is how i chose to do it
     return rates
 
-def _choose_random_rate(rates: np.ndarray):
+def _choose_random_rate(rates: np.ndarray, seed = None):
     """Picks a random rate constant, k_q, using binary search
     according to the equation:
 
@@ -110,15 +110,19 @@ def _choose_random_rate(rates: np.ndarray):
     
     Parameters
     ----------
-    rates: np.ndarray
+    rates : np.ndarray
         A numpy array of size (N_grid,N_grid,N_components,N_max_rates) containing all N possible rates the system
         has.
+    seed : int or None
+        Seed of random number, if desired.
     
     Returns
     ----------
     np.ndarray
         Index of the chosen rate
     """
+    if seed:
+        np.random.seed(seed)
     # pick a random number
     rho_1 = np.random.random()
     # get total rates
@@ -132,7 +136,8 @@ def _choose_random_rate(rates: np.ndarray):
 def propagate_monte_carlo_one_step(rates: np.ndarray,
                                    current_time: float,
                                    comps_properties: dict,
-                                   k_indices: dict
+                                   k_indices: dict,
+                                   seed = None,
                                    ):
     """Propagates the kinetic monte carlo algorithm in time by taking one step.
     
@@ -170,6 +175,8 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
             }
             ```
         Note that this is not generalizable and requires more effort in future versions.
+    seed : int or None
+        Seed of random choice, if chosen.
 
     Returns
     ----------
@@ -178,13 +185,14 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
     float
         Updated time.
     """
+    if seed:
+        np.random.seed(seed)
     # first randomly pick a number
-    ############### NEED TO FIX THIS
     rho_2 = np.random.random() # rho_1 is in the random rate chooser
     # get k_tot
     k_tot = np.sum(rates)
     # draw a random process (index) using binary search
-    index = _choose_random_rate(rates)
+    index = _choose_random_rate(rates,seed=seed)
     # propagate according to the TOTAL rate constant to ensure that it occurs correctly
     current_time -= np.log(rho_2)/k_tot
     # update the rate lists by 
@@ -195,11 +203,16 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
     if event_type == k_indices.get('k_ads'): # if we just picked an adsorption event
         # prevent any OTHER components from adsorbing at this site
         rates[index[0],index[1],:,event_type] = 0.
+        # set the desorption for this atom
+        el = list(comps_properties.keys())[index[2]] # get the atom from chosen index index
+        rates[index[0],index[1],index[2],k_indices.get("k_des")] = comps_properties.get(el).get("k_des")
     elif event_type == k_indices.get('k_des'): # if we picked a desorption event
+        # first remove the desorption
+        rates[index] = 0.
         # allow ANY components to adsorb here
         # go element by element here
         for m in range(len(comps_properties.keys())):
             el = list(comps_properties.keys())[m]
             myk = comps_properties.get(el).get("k_ads")
-            rates[index[0],index[1],m,event_type] = myk
+            rates[index[0],index[1],m,k_indices.get('k_ads')] = myk
     return rates,current_time
