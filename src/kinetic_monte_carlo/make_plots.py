@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.patches as mpatches
+import matplotlib
+from kinetic_monte_carlo.monte_carlo_propagator import generate_full_ads_des_list
 import numpy as np
 
 def make_grid(ax,N_grid,grid_vis,el_index,curr_time):
@@ -47,7 +49,7 @@ def plot_trajectory(N_grid,grid_vis,el_index,t_uniform):
     The kMC must be preprocessed before this to ensure that it is actually
     on a grid of time.
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(dpi=400)
 
     def update(frame):
         return make_grid(ax, N_grid, grid_vis[frame], el_index, t_uniform[frame])
@@ -66,6 +68,7 @@ def plot_trajectory(N_grid,grid_vis,el_index,t_uniform):
 
 def plot_surface_coverage(N_grid,grid_vis,el_index,times):
     # first get the surface coverage for each element
+    plt.figure(dpi=400)
     nums = {l:[] for l in el_index}
     l_max = np.max(list(el_index.keys()))
     for i in range(len(grid_vis)):
@@ -80,10 +83,66 @@ def plot_surface_coverage(N_grid,grid_vis,el_index,times):
     plt.savefig("surface_coverage.png")
     plt.show()
 
+def plot_contour(N_grid,tot_rates):
+    """
+    Plots the magnitude of the adsorption rate constant at each grid point.
+
+    Pick colours based on magnitude of rate constants
+
+    FIX DOCTSRINGS!!!!!!!
+    #####################
+    #####################
+
+    """
+    fig,ax = plt.subplots(dpi=400)
+
+    # normalize things (note i did not fully make this myself, ChatGPt helped with syntax)
+    # for tot_rates[i,j,0,0], doesn't matter that I picked index 0, since same filter is applied to both
+    # when the tot_rates list was created
+    values = tot_rates[:,:,0,0]
+    norm = matplotlib.colors.Normalize(vmin=np.min(values),vmax=np.max(values))
+    cmap = matplotlib.cm.plasma
+    sm = matplotlib.cm.ScalarMappable(norm=norm, cmap="plasma")
+    sm.set_array([])
+
+    for i in range(N_grid):
+        for j in range(N_grid):
+            # also we are just looking at ads
+            color = cmap(norm(tot_rates[i,j,0,0]))
+            circle = plt.Circle((i,j),0.45,color=color,fill=True,linewidth=0.2)
+            ax.add_artist(circle)
+    ax.set_xlim([-1.0, N_grid])
+    ax.set_ylim([-1.0, N_grid])
+    ax.set_aspect(1.0)
+    plt.scatter(np.arange(N_grid),np.arange(N_grid),s=0, facecolors='none')
+    ax.axis('off')
+    cbar = plt.colorbar(sm,ax=ax)
+    cbar.set_ticks([])
+    plt.savefig("surface_defects.png")
+    plt.show() ### SHOWS A PLOT
+    return ax.artists 
+
 if __name__ == "__main__":
     # get el_index from comps_properties
-    el_index = {1:["red","O"],2:["blue","C"]}
-    grid_vis = np.random.randint(3,size=(4,50,50))
-    t_uniform = np.linspace(0,10,4)
-
-    plot_trajectory(50,grid_vis,el_index,t_uniform)
+        # checks that desorption events are handled correctly
+    np.random.seed(67)
+    comps_properties = {
+        "O" : {
+            "partial_pressure" : 0.7,
+            "mass" : 15.999,
+            "k_ads" : 1.0,
+            "k_des" : 2.0,
+        },
+        "C" : {
+            "partial_pressure" : 0.3,
+            "mass" : 12.01,
+            "k_ads" : 12.0,
+            "k_des" : 4.0,
+        }
+    }
+    # mostly zeros, 2x2 grid with 2 components, 2 rxn types
+    k_indices = {'k_ads': 0, 'k_des': 1}
+    # only one site is active
+    surface_smoothness=5.0
+    tot_rates = generate_full_ads_des_list(30,comps_properties,surface_smoothness,k_indices,seed=67)
+    plot_contour(30,tot_rates)

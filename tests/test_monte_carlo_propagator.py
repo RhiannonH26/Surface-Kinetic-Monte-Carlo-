@@ -31,26 +31,38 @@ def test_choose_rate_large_samples():
     probabilities = init_vals/big_len*100
     assert np.allclose(rates,probabilities,1e-2)
 
-def test_count_number_rxn_types():
+def test_rough_surface_equal():
+    # checks that desorption events are handled correctly
+    np.random.seed(67)
     comps_properties = {
         "O" : {
             "partial_pressure" : 0.7,
             "mass" : 15.999,
-            "k_ads" : 1e-9,
-            "k_des" : 1e-10,
-            "k_diffusion" : 1e-3,
-            "k_rxn" : 1e-4
+            "k_ads" : 1.0,
+            "k_des" : 2.0,
         },
         "C" : {
             "partial_pressure" : 0.3,
             "mass" : 12.01,
-            "k_ads" : 1e-4,
-            "k_des" : 1e-8,
-            "k_rxn" : 1e-4
+            "k_ads" : 12.0,
+            "k_des" : 4.0,
         }
     }
-    num = monte_carlo_propagator._count_number_rxn_types(comps_properties)
-    assert 4 == float(num)
+    # mostly zeros, 2x2 grid with 2 components, 2 rxn types
+    k_indices = {'k_ads': 0, 'k_des': 1}
+    # only one site is active
+    surface_smoothness=5.0
+    tot_rates = monte_carlo_propagator.generate_full_ads_des_list(2,comps_properties,surface_smoothness,k_indices,seed=67)
+    # when add desorption and adsorption, shouold have a value back that only depends on max and min of adsorption
+    # first divide by actual ads and des values
+    for m in range(len(comps_properties)):
+        el = list(comps_properties.keys())[m]
+        tot_rates[:,:,m,k_indices.get("k_ads")] /= comps_properties.get(el).get("k_ads")
+        tot_rates[:,:,m,k_indices.get("k_des")] /= comps_properties.get(el).get("k_des")
+    tot_rates_ads = tot_rates[:,:,:,k_indices.get("k_ads")] 
+    tot_rates_des = tot_rates[:,:,:,k_indices.get("k_des")]
+    test = tot_rates_ads + tot_rates_des
+    assert np.allclose(np.full_like(test,np.max(tot_rates_ads)+np.min(tot_rates_ads)),test)
     
 def test_propagate_one_step_choose_desorption():
     # checks that desorption events are handled correctly
@@ -77,7 +89,10 @@ def test_propagate_one_step_choose_desorption():
     rates[0,0,0,1] = 2.0 # one O atom has been adsorbed at the (0,0) site
     # the next event should be adsorption, moved forward in time by:
     time = -np.log(np.random.random())/2.0
-    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates, 0, comps_properties,k_indices,grid_vis,seed=67)
+    surface_smoothness=0
+    tot_rates = monte_carlo_propagator.generate_full_ads_des_list(2,comps_properties,surface_smoothness,k_indices,seed=67)
+    # the next event should be adsorption, moved forward in time by:
+    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates,0,k_indices,grid_vis,tot_rates,seed=67)
     # the next chosen rate should be a desorption event
     # that means ALL desorption events are possible,
     expected_rates = np.zeros((2,2,2,2))
@@ -109,8 +124,10 @@ def test_propagate_one_step_choose_adsorption():
     # only one site is active
     rates[0,0,0,0] = 1.0 # one O atom could adsorb
     rates[0,0,1,0] = 12.0 # one C atom could adsorb
+    surface_smoothness=0
+    tot_rates = monte_carlo_propagator.generate_full_ads_des_list(2,comps_properties,surface_smoothness,k_indices,seed=67)
     # the next event should be adsorption, moved forward in time by:
-    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates, 0, comps_properties,k_indices,grid_vis,seed=67)
+    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates,0,k_indices,grid_vis,tot_rates,seed=67)
     # the next chosen rate should be a desorption event
     # oxygen rate should be removed, only have desorption of C
     expected_rates = np.zeros((2,2,2,2))
@@ -141,8 +158,10 @@ def test_grid_vis():
     # only one site is active
     rates[0,0,0,0] = 1.0 # one O atom could adsorb
     rates[0,0,1,0] = 12.0 # one C atom could adsorb
+    surface_smoothness=0
+    tot_rates = monte_carlo_propagator.generate_full_ads_des_list(2,comps_properties,surface_smoothness,k_indices,seed=67)
     # the next event should be adsorption, moved forward in time by:
-    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates, 0, comps_properties,k_indices,grid_vis,seed=67)
+    rates,updated_time,grid_vis = monte_carlo_propagator.propagate_monte_carlo_one_step(rates,0,k_indices,grid_vis,tot_rates,seed=67)
     # the next chosen rate should be a desorption event
     # oxygen rate should be removed, only have desorption of C
     expected_grid_vis = np.zeros((2,2))

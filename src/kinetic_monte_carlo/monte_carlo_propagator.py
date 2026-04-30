@@ -1,49 +1,21 @@
 import numpy as np
+from scipy.ndimage import gaussian_filter
+import matplotlib.pyplot as plt
 
-def _count_number_rxn_types(comps_properties: dict):
-    """Determines the number of reaction types based on the number of
-    k_* present in the comps_properties dictionary (which also has
-    nested dictionaries for each component). 
-    
-    Parameters
-    ----------
-    comps_properties : dict(dict)
-        A dictionary of dictionaries containing the properties of each element 
-        in each dictionary. It must contain the following properties for each 
-        dictionary (specified by the element): "partial_pressure" in atm, 
-        "mass" in u (atomic units), and "k_ads" the rate constant in units of s^-1. 
-        
-        Note that the rate constants must be in the same order for ALL components.
-        
-        Note that the chosen name or "key" for each component in the first level 
-        of the dictionary is unimportant. For example, one element of this list 
-        could be:
-    
-    ```
-    "<atom>" : {   # <atom> is the name of the element, str
-        "partial_pressure" : float, # partial pressure of the component
-        "mass" : float, # mass in u (g/mol) of the component
-        "k_ads" : float, # adsorption rate constant
-        "k_des": float, # desorption rate constant
-        ...
-    }
-    ```
-
-    Returns
-    ----------
-    int
-        The maximum number of reaction types for all components for
-        matrix reconstruction.
+def generate_full_ads_des_list(N_grid: float,
+                               comps_properties: dict,
+                               surface_smoothness: float,
+                               k_indices: dict,
+                               seed = None):
     """
-    total_rxn_types = np.max([len([h for h in comps_properties.get(el).keys() if h.startswith("k_")]) for el in comps_properties])
-    return total_rxn_types
+    Generate rate constant list for a surface approximated by a 2D N_grid x N_grid
+    surface containing the adsorption and desorption rate constants based on the
+    surface_smoothness. If `surface_smoothness == 0.`, then all adsorption and desorption sites
+    are assumed to be equivalent. Otherwise, a value from > 0 indicates how rough the surface is.
+    Lower values are associated with a more rough surface, and higher values are associated with
+    a less rough surface.
 
-def generate_rate_const_initial_list(N_grid: float,
-                                    comps_properties: dict):
-    """Calculates the initial rate constant list for a surface approximated by
-    a 2D N_grid x N_grid surface. All surface points are assumed to be the same
-    and are a location for a particle to adsorb. This assumes that the surface 
-    starts out clean, i.e. no desorption events are possible.
+    Assumes that the surface starts out clean, i.e. no desorption events are possible.
 
     The output is a np.array that contains an array of the numerical rate
     constants that has an index that matches the description above. The index
@@ -52,9 +24,9 @@ def generate_rate_const_initial_list(N_grid: float,
 
     Parameters
     ----------
-    N_grid : int
-        Number of surface locations along one dimension of the surface.
-    comps_properties : dict(dict)
+    N_grid : float
+        The number of positions along one direction of the 2D metal surface.
+    comps_properties : dict[dict]
         A dictionary of dictionaries containing the properties of each element 
         in each dictionary. It must contain the following properties for each 
         dictionary (specified by the element): "partial_pressure" in atm, 
@@ -68,37 +40,109 @@ def generate_rate_const_initial_list(N_grid: float,
         of the dictionary is unimportant. For example, one element of this list 
         could be:
     
-    ```
-    "<atom>" : {   # <atom> is the name of the element, str
-        "partial_pressure" : float, # partial pressure of the component
-        "mass" : float, # mass in u (g/mol) of the component
-        "k_ads" : float, # adsorption rate constant
-        "k_des": float, # desorption rate constant
-        ...
-    }
-    ```
+        ```
+        "<atom>" : {   # <atom> is the name of the element, str
+            "partial_pressure" : float, # partial pressure of the component
+            "mass" : float, # mass in u (g/mol) of the component
+            "k_ads" : float, # adsorption rate constant
+            "k_des": float, # desorption rate constant
+            ...
+        }
+        ```
+    surface_smoothness : float
+        A value of 0 indicates no roughness, a value > 0 indicates the degree of
+        roughness on the surface. A very rough surface has smaller values and
+        A high smoothness has larger values. In general higher values of smoothness 
+        mean that
+    k_indices : dict
+        Contains the indices (in the 4th dimension of `rates`) of each rate constant.
+        Should have the following key words at minimum:
+            ```
+            k_indices = {
+                'k_ads': 0,
+                'k_des': 1,
+                ...
+            }
+            ```
+        Note that this is not generalizable and requires more effort in future versions.
+    seed : int or None
+        Seed for the process, if provided
+    
+    Returns
+    ----------
+    np.ndarray(N_grid, N_grid, N_components, max_N_rxn_types_per_atom)
+        The numerical value of the rate constants for both adsorption and
+        desorption. (ASSUMES ONLY ADSORPTION DESORPTION ARE POSSIBLE)
+    """
+    if seed:
+        np.random.seed(seed)
+    rates = np.zeros((N_grid,N_grid,len(comps_properties),2))
+    ads = k_indices.get("k_ads")
+    des = k_indices.get("k_des")
+    # do this for both, only make modifications if defects are present
+    for k in range(len(comps_properties)): # for k in number of components
+        el = list(comps_properties.keys())[k] # current element
+        # now set both adsorption and desorption
+        rates[:,:,k,ads] = comps_properties.get(el).get("k_ads") # set all grid elements to be k_ads
+        rates[:,:,k,des] = comps_properties.get(el).get("k_des") # set all grid elements to be k_ads
+    if surface_smoothness != 0:
+        random_noise = np.random.random((N_grid,N_grid))
+        Z = 4*gaussian_filter(random_noise,sigma=surface_smoothness)
+        # get some filter to apply to rates
+        # want higher ads and lower des to go together to simulate trapping
+        # sites on a surface
+        ads_array = Z/np.max(Z) * 8 - 6
+        des_array = np.max(ads_array)-ads_array.copy()+np.min(ads_array) # get the inverse amount, minimum value is the same minimum value as ads
+        # multiply all rate constants by this factor for all adsorbates
+        rates[:,:,:,ads] *= np.repeat(ads_array[:,:,np.newaxis],len(comps_properties),axis=2)
+        rates[:,:,:,des] *= np.repeat(des_array[:,:,np.newaxis],len(comps_properties),axis=2)
+    return rates
+
+def generate_rate_const_initial_list(full_rates: np.ndarray,
+                                    k_indices: dict):
+    """Calculates the initial rate constant list for a surface approximated by
+    a 2D N_grid x N_grid surface. All surface points are assumed to be the same
+    and are a location for a particle to adsorb. This assumes that the surface 
+    starts out clean, i.e. no desorption events are possible.
+
+    The output is a np.array that contains an array of the numerical rate
+    constants that has an index that matches the description above. The index
+    provides information about (1) the location on the grid (first two indices),
+    (2) the atom type, and (3) the rate constant type (ads, des, ...)
+
+    Parameters
+    ----------
+    full_rates : np.ndarray
+        A list of numerical rates (adsorption and desorption) for the system, either
+        made with the helper function `generate_full_ads_des_list` or generated
+        by the user.
+    k_indices : dict
+        Contains the indices (in the 4th dimension of `rates`) of each rate constant.
+        Should have the following key words at minimum:
+            ```
+            k_indices = {
+                'k_ads': 0,
+                'k_des': 1,
+                ...
+            }
+            ```
+        Note that this is not generalizable and requires more effort in future versions.
     
     Returns
     ----------
     np.ndarray(N_grid, N_grid, N_components, max_N_rxn_types_per_atom)
         The numerical value of the rate constants. 
     """
-    num_rxn_types = _count_number_rxn_types(comps_properties)
-    rates = np.zeros((N_grid,N_grid,len(comps_properties.keys()),num_rxn_types))
     # the positions provide information about what rate it is
     # the last number in the array tells us what type of rxn is occuring
     # an index of 0 indicates an adsorption rate constant
     # an index of 1 indicates a desorption rate constant
     # ... and so on in the order that they appear GIVEN that they start with k_...
-    # note that this does NOT work well if there are defects and position matters
-    for k in range(len(comps_properties.keys())):
-        for l in range(N_grid):
-            for w in range(N_grid):
-                el = list(comps_properties.keys())[k]
-                myk = comps_properties.get(el).get("k_ads")
-                rates[l,w,k,0] = myk
+    # at the beginning, only desorption events are possible
+    initial_rates = full_rates.copy()
+    initial_rates[:,:,:,k_indices.get("k_des")] = 0.
     # note could have stored things a bit differently but this is how i chose to do it
-    return rates
+    return initial_rates
 
 def _choose_random_rate(rates: np.ndarray, seed = None):
     """Picks a random rate constant, k_q, using binary search
@@ -136,9 +180,9 @@ def _choose_random_rate(rates: np.ndarray, seed = None):
 
 def propagate_monte_carlo_one_step(rates: np.ndarray,
                                    current_time: float,
-                                   comps_properties: dict,
                                    k_indices: dict,
                                    grid_vis: np.ndarray,
+                                   tot_array: np.ndarray,
                                    seed = None,
                                    ):
     """Propagates the kinetic monte carlo algorithm in time by taking one step.
@@ -158,17 +202,14 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
         about the type of event.
     current_time : float
         The current time in the simulation in seconds.
-    comps_properties : list(dict)
-        A list of dictionaries containing the properties of each element 
-        in each dictionary. It must contain the following properties for each 
-        keyword: the element specified with "atom", "partial_pressure" in atm, 
-        "mass" in u (atomic units), and "k_ads" the rate constant in units of s^-1. 
-        Note that the chosen name or "key" for each component in the first level 
-        of the dictionary is unimportant.
     grid_vis : np.ndarray
         Provides information about the state of the grid for later visualization. Each 
         position has an index indicating which atom is adsorbed (equal to 1 + index
         in the comps_properties dict). Size (Ngrid, Ngrid)
+    tot_rates_array : np.ndarray
+        All possible adsorption and desorption events that could happen on the surface
+        regardless of what events has occured. Same dimensions as `rates`. Serves as
+        storage for the rates; used for pulling rate constant for the next step.
     k_indices : dict
         Contains the indices (in the 4th dimension of `rates`) of each rate constant.
         Should have the following key words at minimum:
@@ -196,6 +237,7 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
     """
     if seed:
         np.random.seed(seed)
+    tot_rates_array = tot_array.copy()
     # first randomly pick a number
     rho_2 = np.random.random() # rho_1 is in the random rate chooser
     # get k_tot
@@ -213,8 +255,7 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
         # prevent any OTHER components from adsorbing at this site
         rates[index[0],index[1],:,event_type] = 0.
         # set the desorption for this atom
-        el = list(comps_properties.keys())[index[2]] # get the atom from chosen index index
-        rates[index[0],index[1],index[2],k_indices.get("k_des")] = comps_properties.get(el).get("k_des")
+        rates[*index[:-1],k_indices.get("k_des")] = tot_rates_array[*index[:-1],k_indices.get("k_des")]
         # change the grid for this to be the atom identity = comps_properties + 1, 0 represents nothing there
         grid_vis[index[0], index[1]] = index[2] + 1
     elif event_type == k_indices.get('k_des'): # if we picked a desorption event
@@ -223,9 +264,25 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
         # change the grid for this to be the atom identity; 0 represents nothing there
         grid_vis[index[0], index[1]] = 0
         # allow ANY components to adsorb here
-        # go element by element here
-        for m in range(len(comps_properties.keys())):
-            el = list(comps_properties.keys())[m]
-            myk = comps_properties.get(el).get("k_ads")
-            rates[index[0],index[1],m,k_indices.get('k_ads')] = myk
+        # recall: 3rd index is the elements, just select all
+        rates[*index[:2],:,k_indices.get('k_ads')] = tot_rates_array[*index[:2],:,k_indices.get('k_ads')]
     return rates,current_time,grid_vis
+
+if __name__ == "__main__":
+    N_grid = 100
+    comps_properties = {
+        "A" : {
+            "partial_pressure" : 0.7,
+            "mass" : 15.999,
+            "k_ads" : 7e-1,
+            "k_des" : 2.0e-1,
+        },
+        "B" : {
+            "partial_pressure" : 0.3,
+            "mass" : 12.01,
+            "k_ads" : 1.0e-1,
+            "k_des" : 1.0e-9,
+        }
+    }
+    surface_smoothness = 8.0
+    generate_full_ads_des_list(N_grid,comps_properties,surface_smoothness)
