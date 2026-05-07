@@ -71,8 +71,11 @@ comps_properties = {
 
 Which outputs the following plots:
 
-Inline-style: 
-![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_coverage_defects.png "Logo Title Text 1")
+#### Surface coverage vs. time
+![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_coverage_defects.png "Surface covg vs. time")
+
+#### Trajectory over times
+![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/trajectory_thermodynamic.mp4 "Surface covg vs. time")
 
 ### Rough Surface Adsorption
 
