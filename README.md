@@ -71,6 +71,9 @@ comps_properties = {
 
 Which outputs the following plots:
 
+Inline-style: 
+![alt text]([https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_coverage_defects.png) "Logo Title Text 1")
+
 ### Rough Surface Adsorption
 
 We know that when the surface is not perfect, due to defects present on the surface, the
