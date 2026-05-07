@@ -49,11 +49,11 @@ def generate_full_ads_des_list(N_grid: float,
             ...
         }
         ```
-    surface_smoothness : float
-        A value of 0 indicates no roughness, a value > 0 indicates the degree of
+    surface_smoothness : float or str
+        A value of "max" indicates no roughness, a non-zero value indicates the degree of
         roughness on the surface. A very rough surface has smaller values and
         A high smoothness has larger values. In general higher values of smoothness 
-        mean that
+        mean that the surface is more smooth. 
     k_indices : dict
         Contains the indices (in the 4th dimension of `rates`) of each rate constant.
         Should have the following key words at minimum:
@@ -85,7 +85,7 @@ def generate_full_ads_des_list(N_grid: float,
         # now set both adsorption and desorption
         rates[:,:,k,ads] = comps_properties.get(el).get("k_ads") # set all grid elements to be k_ads
         rates[:,:,k,des] = comps_properties.get(el).get("k_des") # set all grid elements to be k_ads
-    if surface_smoothness != 0:
+    if (type(surface_smoothness) == float or type(surface_smoothness) == int) and surface_smoothness != "max":
         random_noise = np.random.random((N_grid,N_grid))
         Z = 4*gaussian_filter(random_noise,sigma=surface_smoothness)
         # get some filter to apply to rates
@@ -96,6 +96,11 @@ def generate_full_ads_des_list(N_grid: float,
         # multiply all rate constants by this factor for all adsorbates
         rates[:,:,:,ads] *= np.repeat(ads_array[:,:,np.newaxis],len(comps_properties),axis=2)
         rates[:,:,:,des] *= np.repeat(des_array[:,:,np.newaxis],len(comps_properties),axis=2)
+    elif surface_smoothness == "max":
+        pass
+    else:
+        print("SURFACE SMOOTHNESS VARIABLE NOT CORRECT")
+        return None
     return rates
 
 def generate_rate_const_initial_list(full_rates: np.ndarray,
@@ -267,22 +272,3 @@ def propagate_monte_carlo_one_step(rates: np.ndarray,
         # recall: 3rd index is the elements, just select all
         rates[*index[:2],:,k_indices.get('k_ads')] = tot_rates_array[*index[:2],:,k_indices.get('k_ads')]
     return rates,current_time,grid_vis
-
-if __name__ == "__main__":
-    N_grid = 100
-    comps_properties = {
-        "A" : {
-            "partial_pressure" : 0.7,
-            "mass" : 15.999,
-            "k_ads" : 7e-1,
-            "k_des" : 2.0e-1,
-        },
-        "B" : {
-            "partial_pressure" : 0.3,
-            "mass" : 12.01,
-            "k_ads" : 1.0e-1,
-            "k_des" : 1.0e-9,
-        }
-    }
-    surface_smoothness = 8.0
-    generate_full_ads_des_list(N_grid,comps_properties,surface_smoothness)

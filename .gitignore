@@ -3,8 +3,9 @@
 ### Original source: https://github.com/github/gitignore/blob/main/Python.gitignore
 
 #
-*.png
-*.mp4
+#*.png
+#*.mp4
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

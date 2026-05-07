@@ -12,4 +12,5 @@ dependencies = [
    "numpy",
    "matplotlib",
    "pytest",
+   "scipy"
 ]
