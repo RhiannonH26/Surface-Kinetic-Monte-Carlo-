@@ -72,7 +72,7 @@ comps_properties = {
 Which outputs the following plots:
 
 #### Surface coverage vs. time
-![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_coverage_defects.png "Surface covg vs. time")
+![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_coverage_thermodynamic.png "Surface covg vs. time")
 
 #### Trajectory over times
 ![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/trajectory_thermodynamic.mp4 "Surface covg vs. time")
@@ -120,3 +120,13 @@ comps_properties = {
 ```
 
 Which outputs the following plots:
+
+#### Surface coverage vs. time
+![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_coverage_defects.png "Surface covg vs. time")
+
+#### Defects effect on rates
+![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_defects_defects.png "Defects")
+
+#### Trajectory over times
+![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/trajectory_thermodynamic.mp4 "Surface covg vs. time")
+
