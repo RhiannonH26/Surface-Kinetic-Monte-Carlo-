@@ -38,7 +38,7 @@ stable but are generated very slowly compared to kinetic products, which are
 generated fast but are short-lived due to the low Gibbs free energy. An example
 of this in the context of adsorbates onto a (clean) metal surface is shown below.
 
-```
+``` python
 from kinetic_monte_carlo.run_kmc import run_full_length_monte_carlo,map_to_time_const_grid
 ### NOTE THAT AN EXAMPLE OF THIS IS SHOWN IN THE MAIN RUN OF RUN_KMC.PY
 
@@ -90,7 +90,7 @@ will show the standard plots used in the above example while also creating a plo
 the surface roughness. Lighter colours indicate a higher rate of adsorption and lower rate
 of desorption (i.e. trap sites) and darker colours indicate the opposite. 
 
-```
+``` python
 from kinetic_monte_carlo.run_kmc import run_full_length_monte_carlo,map_to_time_const_grid
 ### NOTE THAT AN EXAMPLE OF THIS IS SHOWN IN THE MAIN RUN OF RUN_KMC.PY
 
