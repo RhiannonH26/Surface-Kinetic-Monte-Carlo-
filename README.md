@@ -8,7 +8,7 @@ such as surface catalysis. Any number of components will work.
 The current state of the software makes the following assumptions:
 - The gas is sufficiently saturated such that adsorption is not time-dependent
 - Lateral interactions between adsorbates are negligible
-- Only adsorption events are possible
+- Only adsorption and desorption events are possible
 
 It is also currently only capable of running a simulation on a surface
 where the active sites are equal (i.e. adsorption and desorption for
