@@ -77,7 +77,7 @@ Which outputs the following plots:
 #### Surface coverage vs. time
 ![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_coverage_thermodynamic.png "Surface covg vs. time")
 
-#### Trajectory over times
+#### Trajectory over times (VIDEO, will not load)
 ![trajectory video](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/trajectory_thermodynamic.mp4 "Surface covg vs. time")
 
 ### Rough Surface Adsorption
@@ -133,6 +133,6 @@ Which outputs the following plots:
 #### Defects effect on rates
 ![alt text](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/surface_defects_defects.png "Defects")
 
-#### Trajectory over times
+#### Trajectory over times (VIDEO, will not load)
 ![trajectory video](https://github.com/RhiannonH26/Surface-Kinetic-Monte-Carlo-/blob/main/examples_plots/trajectory_thermodynamic.mp4 "Surface covg vs. time")
 
