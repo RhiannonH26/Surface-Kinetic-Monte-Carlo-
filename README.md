@@ -39,6 +39,9 @@ generated fast but are short-lived due to the low Gibbs free energy. An example
 of this in the context of adsorbates onto a (clean) metal surface is shown below.
 
 ```
+from kinetic_monte_carlo.run_kmc import run_full_length_monte_carlo,map_to_time_const_grid
+### NOTE THAT AN EXAMPLE OF THIS IS SHOWN IN THE MAIN RUN OF RUN_KMC.PY
+
 comps_properties = {
         "A" : {
             "partial_pressure" : 0.7,
@@ -88,6 +91,9 @@ the surface roughness. Lighter colours indicate a higher rate of adsorption and 
 of desorption (i.e. trap sites) and darker colours indicate the opposite. 
 
 ```
+from kinetic_monte_carlo.run_kmc import run_full_length_monte_carlo,map_to_time_const_grid
+### NOTE THAT AN EXAMPLE OF THIS IS SHOWN IN THE MAIN RUN OF RUN_KMC.PY
+
 comps_properties = {
         "A" : {
             "partial_pressure" : 0.7,
